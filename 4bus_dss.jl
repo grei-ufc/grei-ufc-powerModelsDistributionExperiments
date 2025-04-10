@@ -26,7 +26,7 @@ eng_model = PowerModelsDistribution.parse_file("4Bus-DY-Bal/4Bus-DY-Bal.DSS")
 #######################################
 time_indexes = collect(1:96) ./ 4
 
-# carga Ativa
+# carga ativa
 pd_ts_l1 = Dict("time" => time_indexes,
                 "values" => load_data.pload,
                 "offset" => 0,
