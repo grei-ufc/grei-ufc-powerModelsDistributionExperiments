@@ -193,6 +193,7 @@ plot!(twinx(), time_indexes, bess_state,
 title!("Potência Ativa e Estado do Armazenamento")
 savefig(results_path * "estado_armazenamento_reativo.png")"""
 
+
 ###################
 # plotando modelo #
 ###################
