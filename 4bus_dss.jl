@@ -6,7 +6,6 @@ using Plots
 
 include("utils/constraint_utils.jl")
 include("utils/load_data.jl")
-
 results_path = "results/2025-04-09_solar_carga_armazenamento/"
 
 ########################
