@@ -1,0 +1,11 @@
+# ============ DADOS ============ #
+*.csv
+*.xlsx
+*.xls
+*.json
+*.parquet
+
+# ============ IMAGENS/VÍDEOS ============ #
+*.jpg
+*.jpeg
+*.png

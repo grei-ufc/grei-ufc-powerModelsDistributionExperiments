@@ -1,3 +1,4 @@
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
+PowerPlots = "229d1e32-5c67-4c9a-a884-d6a3a7f23cfa"
