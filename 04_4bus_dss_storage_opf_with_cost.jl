@@ -6,7 +6,11 @@ using Plots
 
 include("utils/constraint_utils.jl")
 include("utils/load_data.jl")
+include("utils/objective_storage_cost.jl")
+include("utils/storage_utils.jl")
+
 results_path = "results/2025-04-21_solar_carga_armazenamento_opf_cost/"
+
 
 ########################
 # construção de modelo #
@@ -19,47 +23,16 @@ gen_data = get_gen_data(data_path, 1, 2) .* 20
 
 eng_model = PowerModelsDistribution.parse_file("4Bus-DY-Bal/4Bus-DY-Bal.DSS")
 
-
-############################
-# adicionando um novo bus #
-############################
-add_bus!(eng_model,
-         "n5",
-         rg=[0.0],
-         grounded=[4],
-         status=ENABLED,
-         terminals=[1, 2, 3, 4],
-         xg=[0.0])
-
-
-##########################
-# adicionando nova linha #
-##########################
-line3 = copy(eng_model["line"]["line2"])
-line3["f_bus"] = "n3"
-line3["t_bus"] = "n5"
-eng_model["line"]["line3"] = line3
-
-
-##########################
-# adicionando nova carga #
-##########################
-add_load!(eng_model,
-          "load2",
-          "n5",
-          [1, 2, 3, 4],
-          pd_nom=[1800.0, 1800.0, 1800.0],
-          configuration=WYE,
-          status=ENABLED,
-          vm_nom=2.40178,
-          dispatchable=NO,
-          qd_nom=[871.78, 871.78, 871.78])
+solver = optimizer_with_attributes(
+    Ipopt.Optimizer,
+    "max_iter" => 15000,
+    "tol" => 1e-8)
 
 
 #######################################
 # adicionando série temporal de carga #
 #######################################
-time_indexes = collect(1:96) ./ 4
+time_indexes = Float64.(collect(1:96))
 
 # carga ativa
 pd_ts_l1 = Dict("time" => time_indexes,
@@ -77,16 +50,13 @@ eng_model["time_series"] = Dict("pd_ts_l1" => pd_ts_l1, "qd_ts_l1" => qd_ts_l1)
 eng_model["load"]["load1"]["time_series"] = Dict("pd_nom" => "pd_ts_l1",
                                                  "qd_nom" => "qd_ts_l1")
 
-eng_model["time_series"] = Dict("pd_ts_l1" => pd_ts_l1, "qd_ts_l1" => qd_ts_l1)
-eng_model["load"]["load2"]["time_series"] = Dict("pd_nom" => "pd_ts_l1",
-                                                 "qd_nom" => "qd_ts_l1")
 
 #########################################
 # adicionando série temporal de geracao #
 #########################################
 gen_data_1 = []
 for i in gen_data.pgen
-    push!(gen_data_1, [i, 0])
+    push!(gen_data_1, [i, i, i, 0])
 end
 
 pd_ts_g1 = Dict("time" => time_indexes,
@@ -98,32 +68,17 @@ add_solar!(eng_model,
            "pv1",
            "n4",
            configuration=WYE,
-           [1, 4],
-           pg=[0, 0],
-           qg=[0, 0],
-           pg_ub=[1100, 0],
-           pg_lb=[1100, 0],
-           qg_ub=[0, 0],
-           qg_lb=[0, 0])
+           [1, 2, 3, 4],
+           pg=[200, 200, 200, 0],
+           qg=[0, 0, 0, 0],
+           pg_ub=[200, 200, 200, 0],
+           pg_lb=[0, 0, 0, 0],
+           qg_ub=[0, 0, 0, 0],
+           qg_lb=[0, 0, 0, 0])
 eng_model["time_series"]["pd_ts_g1"] = pd_ts_g1
 eng_model["solar"]["pv1"]["time_series"] = Dict("pg_ub" => "pd_ts_g1",
                                                 "pg_lb" => "pd_ts_g1")
 
-add_solar!(eng_model,
-           "pv2",
-           "n5",
-           configuration=WYE,
-           [2, 4],
-           pg=[0, 0],
-           qg=[0, 0],
-           pg_ub=[1100, 0],
-           pg_lb=[1100, 0],
-           qg_ub=[0, 0],
-           qg_lb=[0, 0])
-eng_model["time_series"]["pd_ts_g1"] = pd_ts_g1
-eng_model["solar"]["pv2"]["time_series"] = Dict("pg_ub" => "pd_ts_g1",
-                                                "pg_lb" => "pd_ts_g1")
-                                        
 
 #############################
 # adicionando armazenamento #
@@ -132,11 +87,11 @@ add_storage!(eng_model,
              "bess_1",
              "n4",
              configuration=WYE,
-             [1, 4],
-             energy=40000,
+             [1, 2, 3, 4],
+             energy=20000,
              energy_ub=80000,
-             charge_ub=6000,
-             discharge_ub=5000,
+             charge_ub=7000,
+             discharge_ub=7000,
              sm_ub=150000,
              cm_ub=1e6,
              qex=0,
@@ -148,38 +103,20 @@ add_storage!(eng_model,
              rs=0,
              xs=0)
 
-add_storage!(eng_model,
-             "bess_2",
-             "n5",
-             configuration=WYE,
-             [2, 4],
-             energy=40000,
-             energy_ub=80000,
-             charge_ub=6000,
-             discharge_ub=5000,
-             sm_ub=150000,
-             cm_ub=1e6,
-             qex=0,
-             pex=0,
-             charge_efficiency=100,
-             discharge_efficiency=100,
-             qs_ub=0,
-             qs_lb=0,
-             rs=0,
-             xs=0)
+eng_model["voltage_source"]["source"]["cost_pg_parameters"] = [100, 0]
+eng_model["solar"]["pv1"]["cost_pg_parameters"] = [10, 0]
+eng_model["storage"]["bess_1"]["cost"] = [5000, 0]
 
-eng_model["voltage_source"]["source"]["cost_pg_parameters"] = [0, 0]
-eng_model["solar"]["pv1"]["cost_pg_parameters"] = [100, 0]
-eng_model["solar"]["pv2"]["cost_pg_parameters"] = [100, 0]
+transform_data_model(eng_model)
 
-eng_model["solar"]["pv1"]["pg_lb"] = [0, 0]
-eng_model["solar"]["pv2"]["pg_lb"] = [0, 0]
-
+eng_model = make_multinetwork(eng_model)
+set_time_elapsed!(eng_model, 0.25)
 
 #######################
 # solucionando modelo #
 #######################
-result = solve_mc_model(eng_model, ACPUPowerModel, Ipopt.Optimizer, build_mn_mc_opf; multinetwork=true)
+result = solve_mc_model(eng_model, ACPUPowerModel, solver, build_mc_mn_opf_storage_cost; multinetwork=true)
+
 
 ########################
 # avaliando resultados #
@@ -267,9 +204,11 @@ ylabel!("Tensão em Kv")
 savefig(results_path * "tensao_barramento.png")
 
 
+"""
 ###################
 # plotando modelo #
 ###################
 math_model = PowerModelsDistribution.transform_data_model(eng_model)
 powerplot(math_model, show_flow=true)
 pm = instantiate_mc_model(eng_model, ACPUPowerModel, build_mn_mc_opf, multinetwork=true)
+"""

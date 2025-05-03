@@ -20,42 +20,6 @@ gen_data = get_gen_data(data_path, 1, 2) .* 20
 eng_model = PowerModelsDistribution.parse_file("4Bus-DY-Bal/4Bus-DY-Bal.DSS")
 
 
-############################
-# adicionando um novo bus #
-############################
-add_bus!(eng_model,
-         "n5",
-         rg=[0.0],
-         grounded=[4],
-         status=ENABLED,
-         terminals=[1, 2, 3, 4],
-         xg=[0.0])
-
-
-##########################
-# adicionando nova linha #
-##########################
-line3 = copy(eng_model["line"]["line2"])
-line3["f_bus"] = "n3"
-line3["t_bus"] = "n5"
-eng_model["line"]["line3"] = line3
-
-
-##########################
-# adicionando nova carga #
-##########################
-add_load!(eng_model,
-          "load2",
-          "n5",
-          [1, 2, 3, 4],
-          pd_nom=[1800.0, 1800.0, 1800.0],
-          configuration=WYE,
-          status=ENABLED,
-          vm_nom=2.40178,
-          dispatchable=NO,
-          qd_nom=[871.78, 871.78, 871.78])
-
-
 #######################################
 # adicionando série temporal de carga #
 #######################################
@@ -108,22 +72,7 @@ add_solar!(eng_model,
 eng_model["time_series"]["pd_ts_g1"] = pd_ts_g1
 eng_model["solar"]["pv1"]["time_series"] = Dict("pg_ub" => "pd_ts_g1",
                                                 "pg_lb" => "pd_ts_g1")
-
-add_solar!(eng_model,
-           "pv2",
-           "n5",
-           configuration=WYE,
-           [2, 4],
-           pg=[0, 0],
-           qg=[0, 0],
-           pg_ub=[1100, 0],
-           pg_lb=[1100, 0],
-           qg_ub=[0, 0],
-           qg_lb=[0, 0])
-eng_model["time_series"]["pd_ts_g1"] = pd_ts_g1
-eng_model["solar"]["pv2"]["time_series"] = Dict("pg_ub" => "pd_ts_g1",
-                                                "pg_lb" => "pd_ts_g1")
-                                        
+                        
 
 #############################
 # adicionando armazenamento #
@@ -146,28 +95,9 @@ add_storage!(eng_model,
              qs_ub=0,
              qs_lb=0,
              rs=0,
-             xs=0)
-
-add_storage!(eng_model,
-             "bess_2",
-             "n5",
-             configuration=WYE,
-             [2, 4],
-             energy=40000,
-             energy_ub=80000,
-             charge_ub=6000,
-             discharge_ub=5000,
-             sm_ub=150000,
-             cm_ub=1e6,
-             qex=0,
-             pex=0,
-             charge_efficiency=100,
-             discharge_efficiency=100,
-             qs_ub=0,
-             qs_lb=0,
-             rs=0,
-             xs=0)
-
+             xs=0,
+             cost=[5000, 0])
+             
 #######################
 # solucionando modelo #
 #######################
