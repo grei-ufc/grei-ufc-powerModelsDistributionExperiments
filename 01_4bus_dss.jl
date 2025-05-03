@@ -14,7 +14,6 @@ results_path = "results/2025-04-09_solar_carga/"
 
 data_path = "1-MVLV-urban-5.303-1-no_sw"
 load_data = get_load_data(data_path, 1, 1)
-
 gen_data = get_gen_data(data_path, 1, 2) .* 20
 
 eng_model = PowerModelsDistribution.parse_file("4Bus-DY-Bal/4Bus-DY-Bal.DSS")
