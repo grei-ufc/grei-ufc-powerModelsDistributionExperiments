@@ -217,4 +217,3 @@ savefig(results_path * "tensao_barramento.png")
 math_model = PowerModelsDistribution.transform_data_model(eng_model)
 #powerplot(math_model, show_flow=true)
 pm = instantiate_mc_model(eng_model, ACPUPowerModel, build_mn_mc_opf, multinetwork=true)
- 
