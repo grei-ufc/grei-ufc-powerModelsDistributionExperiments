@@ -691,6 +691,9 @@ function objective_mc_min_prosumer_cost(pm::AbstractUnbalancedPowerModel; report
             dch = prosumer["dch"]
             cdis = prosumer["cdis"]
             ddis = prosumer["ddis"]
+            ch_eff = prosumer["charge_efficiency"]
+            dis_eff = prosumer["discharge_efficiency"]
+            loss_cost = prosumer["loss_cost"]
             social_welfare = social_welfare + (
                 a * pdp -
                 0.5 * b * pdp^2 -
@@ -700,7 +703,7 @@ function objective_mc_min_prosumer_cost(pm::AbstractUnbalancedPowerModel; report
                 0.5 * dch * scp^2 -
                 cdis * sdp -
                 0.5 * ddis * sdp^2 -
-                0.0003 * (scp + sdp))
+                loss_cost * ((1 - ch_eff) * scp + 1 - (dis_eff) * sdp))
         end
     end
 

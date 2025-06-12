@@ -1072,6 +1072,7 @@ function _map_eng2math_prosumer!(data_math::Dict{String,<:Any}, data_eng::Dict{S
         math_obj["cdis"] = get(eng_obj, "cdis", 0)
         math_obj["ddis"] = get(eng_obj, "ddis", 0)
         math_obj["p_shared"] = get(eng_obj, "p_shared", 0)
+        math_obj["loss_cost"] = get(eng_obj, "loss_cost", 0.0003)
 
 
         # Additional parameters
